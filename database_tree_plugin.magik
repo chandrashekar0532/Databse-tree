@@ -1,0 +1,85 @@
+#% text_encoding = iso8859_1
+# ************************************************************ 
+#							       
+# (c) 2005-2012 General Electric Company. All Rights Reserved. 
+#							       
+# ************************************************************ 
+_package user
+_pragma(classify_level=debug, topic={application_development_examples})
+##
+## This is a simple plugin to activate a dialog box 
+## based on class model.
+##
+# Define the plugin class
+def_slotted_exemplar( :database_tree_plugin,
+{},
+:plugin 
+)
+$
+_pragma(classify_level=restricted, topic={apps_dev_course}, usage={internal})
+##  The various types this plugin puts on the databus.
+database_tree_plugin.define_shared_constant( :databus_producer_data_types,
+				      { :goto_request,
+				      #  :map_selection,
+				      :record_selection},
+				      :public )
+# Create an action
+_pragma(classify_level=debug, topic={application_development_examples})
+_method database_tree_plugin.init_actions()
+    ## Create the actions defined by the plugin
+    _self.add_action(
+	sw_action.new( :goto_record_selection,
+		       :engine, _self,
+		       :toolbar_control, :button_item,
+		       :image, {:activate, :ui_resource},
+		        :action_message, :Database_tree|()|))
+	
+      
+_endmethod
+$
+
+database_tree_plugin.def_property( :x_offset,
+			       :type, :integer, :default_value, 100,
+			       :description, "X offset used for dialog activation" )
+$
+#
+database_tree_plugin.def_property( :y_offset,
+			       :type, :integer, :default_value,100,
+			       :description, "Y offset used for dialog activation" )
+
+$
+_pragma(classify_level=debug, topic={application_development_examples})
+_method database_tree_plugin.Database_tree()
+	## 
+	## 
+
+
+	name << :database_tree_dialog
+	
+	_if (d << _self.get_dialog( name ) ) _is _unset
+	_then
+
+		d << database_tree_dialog.new_dialog( _self.top_frame, _self )
+		_self.cache_dialog( name, d )	
+	_endif 
+
+	d.activate_relative_to(_self.message(:title_frame) , _self.top_frame,
+			    _self.x_offset,_self.y_offset)
+	
+ 
+	
+    >> d
+	
+_endmethod
+$
+_pragma(classify_level=debug, topic={application_development_examples})
+_method database_tree_plugin.databus_make_data_available(datatype_name,data)
+	## 
+	##
+
+
+		_super.databus_make_data_available(datatype_name,data)
+
+
+_endmethod
+$

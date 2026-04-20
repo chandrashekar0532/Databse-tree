@@ -1,0 +1,249 @@
+#% text_encoding = iso8859_1
+# ************************************************************ 
+#							       
+# (c) 2005-2012 General Electric Company. All Rights Reserved. 
+#							       
+# ************************************************************ 
+_package user
+_pragma(classify_level=restricted, topic={apps_dev_course})
+##
+## This is a simple plugin to activate a dialog box 
+## based on class model.
+##
+# Define the plugin class
+def_slotted_exemplar(:database_tree_dialog,
+{
+	{:plugin,_unset},
+	{:items,property_list.new()},
+	{:ve,_unset },
+	{:vdb,_unset }
+
+},
+:model
+)
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.new(plugin)
+	## 
+	## 
+	>> _clone.init(plugin)
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.init(plugin)
+	## 
+	## 
+	_super.init()
+	.plugin << plugin
+
+	>> _self 
+_endmethod
+$
+
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.build_gui(container)
+	## 
+	## 
+	
+	>> _self.activate_in(container)
+
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.activate_in(a_frame)
+	## 
+	##GUI for goto objects and highlight objects
+	##
+        rc << rowcol.new(a_frame,_unset , 1,_unset)
+	rc.style << :top_level
+        rc_file << rowcol.new(rc,8,8)
+
+	
+	lbl << label_item.new(rc_file,"My Database Menu",:row,1,:col,1)
+
+	btn_quit << button_item.new(rc_file,"Quit",_self ,:quit|()|,:row,4,:col,1)
+
+	btn_goto <<button_item.new(rc_file,"Goto_object",_self,:goto|()|,:row,4,:col,2)
+
+	btn_hig <<button_item.new(rc_file,"Highlight",_self,:highlight|()|,:row,4,:col,3)
+
+#	image_item.new(rc,"\\192.168.4.35\smallworld\Magik_Training_June_22\Sample\bmps\star5.bmp",:row,5,:col,1)
+#	image_button_item.new(rc,"\\192.168.4.35\smallworld\Magik_Training_June_22\Sample\bmps\star5_11.bmp",_self,:run|()|,:row,5,:col,2)
+	_local l_style_holder << string_styles_holder.new_with()
+	l_style_holder.add_image_scheme(:selected_scheme, :default, :closed_folder,
+					:selected, :open_folder)
+	
+	.items[:path_tree] << tree_item.new(rc,
+					      :model,_self,
+					      :col_alignment,:fill,
+					      :mode,:one,
+					      :aspect,:get_all_tree_items,
+					      :style_holder,  l_style_holder,
+					      :select_notifier, :item_selected|()|,
+					      :row, 6,:col, 1)
+
+
+	_return _self
+	>> rc
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.highlight()
+	## 
+	## 
+	_if .items[:s_rec] _is _unset 
+	_then
+	   .plugin.show_message("please select record")
+	    _return 
+	_endif
+		.plugin.databus_make_data_available(:geometry_to_highlight,.items[:filtered_geom_set])
+_endmethod
+$
+
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.goto()
+	## 
+	##
+	#	write(.ve)
+	_if .items[:s_rec] _is _unset 
+	_then
+	   .plugin.show_message("please select record")
+	    _return 
+	_endif
+   #	 write(.items[:s_rec].class_name) 
+         # write("selected goto option")
+		.plugin.databus_make_data_available(:goto_request,.items[:filtered_geom_set])#:goto_request
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.get_all_tree_items
+	## 
+	## 
+	.items[:gpm] << gis_program_manager
+
+	 p_list << rope.new()
+
+	_for db _over .items[:gpm].databases.fast_elements()
+	_loop
+	
+		db_name << db.external_name
+	
+			dt << display_tree.new(db.name,_unset,_unset)
+		#	write(dt)
+			dt.styled_string <<  {:image, :selected_scheme, db_name}
+			p_list.add(dt)
+			.items[:path] << db.name
+		#	write(.items[:path])
+	_endloop
+	
+	>> p_list
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.get_db_tables(val)
+	## 
+	## 
+		gpm << gis_program_manager
+
+		c_list << hash_table.new()
+	       .vdb << gpm.databases[val]
+		.ve << gpm.databases[val].collections
+		_for a_col  _over .ve.fast_elements()
+		_loop
+	      	
+			rec <<	a_col.new_detached_record()
+			_if  rec _isnt _unset
+			_then
+		      
+				_if ( rec.is_rwo?)
+				_then
+					#	sdt << display_tree.new(a_col,_unset,_unset)
+					#	dt.styled_string <<  {:image, :selected_scheme,db_name}
+						c_list[a_col.name] << a_col.external_name
+				_endif
+			_endif 
+		_endloop
+	>> c_list
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.get_db_records(val)
+	## 
+	## 
+	sub_coll << equality_set.new()
+	  a_coll  << .ve[val.as_symbol()]
+	  ctr << 0
+	_for a_sub_rec _over a_coll.fast_elements()
+	_loop
+		_if ctr < 10
+		_then 
+		#	write(a_sub_rec)
+			sub_coll.add(a_sub_rec)
+			ctr +<< 1
+	        _endif
+		
+	_endloop
+
+
+     >>sub_coll
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method database_tree_dialog.item_selected(sel)
+	## 
+	## 
+	.items[:s_rec] << _unset
+	
+	_if (dt << sel.an_element()) _is _unset
+	_then _return
+	_endif
+       # write(dt.children?)
+       #	write(dt.level)
+	.items[:path] << dt.key
+#	write(.items[:path])
+	_if dt.level = 2
+	_then
+						 
+	 coll_names << _self.get_db_tables(dt.key)
+	 _for a_key,an_ele _over coll_names.fast_keys_and_elements() 
+	 _loop
+	         sdt << display_tree.new(a_key,_unset ,dt)
+		 sdt.styled_string << {:image ,:selected_scheme,an_ele}
+	 _endloop
+	
+	_elif dt.level =3
+	_then
+		
+		 a_rec_coll << _self.get_db_records(dt.key)
+		 _for a_rec _over a_rec_coll.fast_elements()
+		 _loop
+			 sdtt << display_tree.new(a_rec,_unset ,dt)
+		      sdtt.styled_string << {:image ,:selected_scheme,a_rec}
+		 _endloop
+	        
+	_elif dt.level =4
+	_then
+		
+	      .items[:s_rec] <<	dt.key
+	       	.items[:filtered_geom_set] << .items[:s_rec].geometry_set(.vdb.world)
+	_endif
+	  
+	     
+			.items[:path_tree].agent.damaged(.items[:path_tree].bounds.expand(10))
+			dt.expanded? << _true 
+	
+_endmethod
+$
+_pragma(classify_level=restricted, topic={apps_dev_course})
+_method  database_tree_dialog.quit()
+	##
+	##Closing the operation
+	## 
+	_if .items _isnt _unset
+	_then
+		.items << property_list.new()
+	_endif 
+	
+	_super.quit()
+_endmethod
+$
